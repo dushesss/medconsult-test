@@ -16,7 +16,7 @@ services:
       APP_URL: http://localhost:8089
       DB_CONNECTION: pgsql
       DB_HOST: db
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_DATABASE: medconsult
       DB_USERNAME: medconsult
       DB_PASSWORD: secret
@@ -35,7 +35,7 @@ services:
       POSTGRES_USER: medconsult
       POSTGRES_PASSWORD: secret
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
