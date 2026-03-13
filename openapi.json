@@ -6,7 +6,8 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8089"
+      "url": "http://localhost:8089",
+      "description": "Docker compose, сервис app, порт 8089"
     }
   ],
   "tags": [
