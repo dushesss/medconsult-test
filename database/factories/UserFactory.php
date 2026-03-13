@@ -30,6 +30,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'phone' => fake()->optional(0.7)->numerify('+79#########'),
+            'birth_date' => fake()->optional(0.8)->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
+            'avatar_path' => null,
         ];
     }
 
