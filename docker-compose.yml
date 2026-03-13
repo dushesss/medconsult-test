@@ -1,0 +1,43 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medconsult_app
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8089:8089"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:dummykeydummykeydummykeydummykey==
+      APP_URL: http://localhost:8089
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5433
+      DB_DATABASE: medconsult
+      DB_USERNAME: medconsult
+      DB_PASSWORD: secret
+    depends_on:
+      - db
+    command: >
+      sh -c "php artisan migrate --force || true
+      && php artisan serve --host=0.0.0.0 --port=8089"
+
+  db:
+    image: postgres:16-alpine
+    container_name: medconsult_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: medconsult
+      POSTGRES_USER: medconsult
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5433:5433"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
