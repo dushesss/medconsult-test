@@ -17,14 +17,14 @@ final class AuthService
     ) {}
 
     /**
-     * @return array{user: User, token: string}|null
+     * @return array{user: User, token: string}|array{needs_verification: true, user: User}|null
      */
     public function login(
         string $email,
         string $password,
         string $ip,
         ?string $userAgent
-    ): ?array {
+    ): array|null {
         if (! Auth::attempt(['email' => $email, 'password' => $password])) {
             return null;
         }
@@ -34,8 +34,13 @@ final class AuthService
             return null;
         }
 
-        $token = $user->createToken(self::TOKEN_NAME)->plainTextToken;
+        if (! $user->hasVerifiedEmail()) {
+            Auth::logout();
 
+            return ['needs_verification' => true, 'user' => $user];
+        }
+
+        $token = $user->createToken(self::TOKEN_NAME)->plainTextToken;
         $this->userActionService->log($user, 'login', null, null, $ip, $userAgent);
 
         return ['user' => $user, 'token' => $token];
@@ -58,7 +63,6 @@ final class AuthService
         ]);
 
         $token = $user->createToken(self::TOKEN_NAME)->plainTextToken;
-
         $this->userActionService->log($user, 'register', null, null, $ip, $userAgent);
 
         return ['user' => $user, 'token' => $token];

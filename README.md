@@ -1,6 +1,6 @@
 # Medconsult Test
 
-Тестовый бэкенд на Laravel: API с Sanctum, профиль, лог действий, загрузка файлов. 
+Тестовый бэкенд на Laravel: API с Sanctum, подтверждение email, профиль, аудит действий (без шума от каждого открытия списка), загрузка и удаление файлов, квота на диск. 
 
 ---
 
@@ -38,7 +38,11 @@
 
 ## Зачем этот проект
 
-API версии v1: регистрация, вход, выход по токену, профиль, история действий, список и загрузка файлов, скачивание файла по правам доступа. Ответы обёрнуты в единый JSON: `data`, `message`, `errors`.
+**Версия API:** URL `/api/v1`. Дальнейшие несовместимые изменения: отдельный префикс (например `v2`) или согласованный заголовок `Accept`.
+
+Регистрация с письмом на почту; вход только после подтверждения email. Профиль и файлы только с подтверждённым email. История действий в БД по умолчанию только **audit** (вход, выгрузка, удаление и т.д.). Ошибки API в одном формате: `data`, `message`, `errors`.
+
+Расписание: раз в неделю `user-actions:prune-telemetry` (если включён scheduler). Квота файлов на пользователя: `USER_FILES_QUOTA_BYTES` в `.env`.
 
 ## Запуск через Docker (пошагово)
 
@@ -123,15 +127,18 @@ docker compose down -v
 |-------|------|--------|---------|
 | GET | `/` | все | Welcome |
 | GET | `/up` | все | Проверка, что приложение живое |
-| POST | `/api/v1/login` | гость | JSON: email, password |
-| POST | `/api/v1/register` | гость | JSON: name, email, password, password_confirmation |
-| POST | `/api/v1/logout` | Bearer | Sanctum |
-| GET | `/api/v1/profile` | Bearer | Профиль авторизованного пользователя |
-| PATCH | `/api/v1/profile` | Bearer | Частичное обновление |
-| GET | `/api/v1/profile/actions` | Bearer | Query `per_page` |
-| GET | `/api/v1/files` | Bearer | Список, query `per_page` |
-| POST | `/api/v1/files` | Bearer | Multipart, поле `file` |
-| GET | `/api/v1/files/{id}` | Bearer | Отдача файла, не JSON |
+| GET | `/email/verify/{id}/{hash}` | signed | Ссылка из письма, без сессии |
+| POST | `/api/v1/login` | гость | После подтверждения email |
+| POST | `/api/v1/register` | гость | Токен для повторной отправки письма |
+| POST | `/api/v1/logout` | Bearer | |
+| POST | `/api/v1/email/verification-notification` | Bearer | Повтор письма, пока email не подтверждён |
+| GET | `/api/v1/profile` | Bearer + verified | |
+| PATCH | `/api/v1/profile` | Bearer + verified | |
+| GET | `/api/v1/profile/actions` | Bearer + verified | `per_page`, опционально `include_telemetry=true` |
+| GET | `/api/v1/files` | Bearer + verified | `per_page` |
+| POST | `/api/v1/files` | Bearer + verified | Multipart `file`, квота |
+| GET | `/api/v1/files/{id}` | Bearer + verified | Скачивание |
+| DELETE | `/api/v1/files/{id}` | Bearer + verified | Удаление |
 
 ## От запроса до ответа (по шагам)
 

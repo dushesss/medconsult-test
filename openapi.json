@@ -144,6 +144,14 @@
               }
             }
           },
+          "403": {
+            "description": "Email не подтверждён",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
           "422": {
             "description": "Ошибка валидации",
             "content": {
@@ -187,7 +195,17 @@
                     {
                       "type": "object",
                       "properties": {
-                        "data": { "$ref": "#/components/schemas/AuthPayload" }
+                        "data": {
+                          "allOf": [
+                            { "$ref": "#/components/schemas/AuthPayload" },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "hint": { "type": "string" }
+                              }
+                            }
+                          ]
+                        }
                       }
                     }
                   ]
@@ -203,6 +221,17 @@
               }
             }
           }
+        }
+      }
+    },
+    "/api/v1/email/verification-notification": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Повторно отправить письмо подтверждения email",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Письмо отправлено или уже подтверждён" },
+          "401": { "description": "Не авторизован" }
         }
       }
     },
@@ -325,11 +354,16 @@
             "name": "per_page",
             "in": "query",
             "schema": { "type": "integer", "default": 15 }
+          },
+          {
+            "name": "include_telemetry",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false }
           }
         ],
         "responses": {
           "200": {
-            "description": "С пагинацией в data",
+            "description": "С пагинацией в data (по умолчанию только audit)",
             "content": {
               "application/json": {
                 "schema": {
@@ -345,6 +379,7 @@
                             "properties": {
                               "id": { "type": "integer" },
                               "action": { "type": "string" },
+                              "level": { "type": "string" },
                               "description": { "type": "string", "nullable": true },
                               "payload": { "nullable": true },
                               "ip": { "type": "string", "nullable": true },
@@ -473,6 +508,25 @@
           },
           "401": { "description": "Требуется авторизация" },
           "403": { "description": "Нет доступа к чужому файлу" },
+          "404": { "description": "Не найдено" }
+        }
+      },
+      "delete": {
+        "tags": ["Files"],
+        "summary": "Удалить файл",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userFile",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Удалено" },
+          "401": { "description": "Требуется авторизация" },
+          "403": { "description": "Чужой файл" },
           "404": { "description": "Не найдено" }
         }
       }

@@ -72,6 +72,7 @@ final class UserSeeder extends Seeder
                 [
                     'name' => $row['name'],
                     'password' => self::DEV_PASSWORD,
+                    'email_verified_at' => now(),
                     'phone' => $row['phone'],
                     'birth_date' => $row['birth_date'],
                     'avatar_path' => $row['avatar_path'],

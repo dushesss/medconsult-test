@@ -18,26 +18,42 @@ final class FileService
 
     private const DIR_PREFIX = 'user-files';
 
+    public function __construct(
+        private readonly UserActionService $userActionService
+    ) {}
+
     public function store(
         User $user,
         UploadedFile $file,
         ?string $ip = null,
         ?string $userAgent = null
     ): UserFile {
-        $safeName = basename($file->getClientOriginalName());
-        $storedName = Str::uuid()->toString().'_'.$safeName;
+        $quota = (int) config('medconsult.user_files_quota_bytes', 0);
+        if ($quota > 0) {
+            $used = (int) $user->userFiles()->sum('size');
+            $add = (int) $file->getSize();
+            if ($used + $add > $quota) {
+                throw new \RuntimeException('Превышена квота хранилища для пользователя');
+            }
+        }
+
+        $originalName = $file->getClientOriginalName();
+        $storedBase = Str::uuid()->toString();
         $relativeDir = self::DIR_PREFIX.'/'.$user->id;
-        $path = $file->storeAs($relativeDir, $storedName, self::DISK);
+        $path = $file->storeAs($relativeDir, $storedBase, self::DISK);
+
+        $fullPath = Storage::disk(self::DISK)->path($path);
+        $mime = $this->detectMime($fullPath) ?: 'application/octet-stream';
 
         $record = UserFile::query()->create([
             'user_id' => $user->id,
             'path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'mime_type' => $file->getClientMimeType(),
+            'original_name' => $originalName,
+            'mime_type' => $mime,
             'size' => $file->getSize() ?: 0,
         ]);
 
-        app(UserActionService::class)->log(
+        $this->userActionService->log(
             $user,
             'file_upload',
             'Загружен файл: '.$record->original_name,
@@ -47,6 +63,14 @@ final class FileService
         );
 
         return $record;
+    }
+
+    public function delete(UserFile $userFile): void
+    {
+        if (Storage::disk(self::DISK)->exists($userFile->path)) {
+            Storage::disk(self::DISK)->delete($userFile->path);
+        }
+        $userFile->delete();
     }
 
     /**
@@ -72,5 +96,16 @@ final class FileService
             $userFile->original_name,
             ['Content-Type' => $userFile->mime_type ?: 'application/octet-stream']
         );
+    }
+
+    private function detectMime(string $absolutePath): ?string
+    {
+        if (! is_readable($absolutePath)) {
+            return null;
+        }
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $type = $finfo->file($absolutePath);
+
+        return is_string($type) && $type !== '' ? $type : null;
     }
 }

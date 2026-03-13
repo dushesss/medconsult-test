@@ -14,6 +14,7 @@ final class UserAction extends Model
     protected $fillable = [
         'user_id',
         'action',
+        'level',
         'description',
         'payload',
         'ip',

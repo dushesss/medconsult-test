@@ -9,6 +9,7 @@ use App\Http\Requests\Api\StoreFileRequest;
 use App\Http\Responses\ApiResponse;
 use App\Models\UserFile;
 use App\Services\FileService;
+use App\Services\UserActionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -16,13 +17,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 final class FileController extends Controller
 {
     public function __construct(
-        private readonly FileService $fileService
+        private readonly FileService $fileService,
+        private readonly UserActionService $userActionService
     ) {}
 
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
         $perPage = (int) $request->query('per_page', 15);
-        $paginator = $this->fileService->paginateForUser($request->user(), $perPage);
+        $paginator = $this->fileService->paginateForUser($user, $perPage);
 
         $items = $paginator->getCollection()->map(fn (UserFile $f) => [
             'id' => $f->id,
@@ -50,12 +53,16 @@ final class FileController extends Controller
             return ApiResponse::error('Файл не передан', null, 422);
         }
 
-        $record = $this->fileService->store(
-            $request->user(),
-            $file,
-            $request->ip(),
-            $request->userAgent()
-        );
+        try {
+            $record = $this->fileService->store(
+                $request->user(),
+                $file,
+                $request->ip(),
+                $request->userAgent()
+            );
+        } catch (\RuntimeException $e) {
+            return ApiResponse::error($e->getMessage(), null, 422);
+        }
 
         return ApiResponse::success([
             'id' => $record->id,
@@ -70,6 +77,33 @@ final class FileController extends Controller
     {
         $this->authorize('view', $userFile);
 
+        $this->userActionService->log(
+            $request->user(),
+            'file_download',
+            $userFile->original_name,
+            ['user_file_id' => $userFile->id],
+            $request->ip(),
+            $request->userAgent()
+        );
+
         return $this->fileService->downloadStream($userFile);
+    }
+
+    public function destroy(Request $request, UserFile $userFile): JsonResponse
+    {
+        $this->authorize('delete', $userFile);
+
+        $this->fileService->delete($userFile);
+
+        $this->userActionService->log(
+            $request->user(),
+            'file_delete',
+            $userFile->original_name,
+            ['user_file_id' => $userFile->id],
+            $request->ip(),
+            $request->userAgent()
+        );
+
+        return ApiResponse::success(null, 'Файл удалён');
     }
 }

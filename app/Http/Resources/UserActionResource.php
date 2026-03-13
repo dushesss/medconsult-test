@@ -20,6 +20,7 @@ final class UserActionResource extends JsonResource
         return [
             'id' => $this->id,
             'action' => $this->action,
+            'level' => $this->level,
             'description' => $this->description,
             'payload' => $this->payload,
             'ip' => $this->ip,

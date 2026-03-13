@@ -21,7 +21,10 @@ final readonly class ProfileService
             $user->name = $data['name'];
         }
         if (array_key_exists('email', $data)) {
-            $user->email = $data['email'];
+            if ($user->email !== $data['email']) {
+                $user->email = $data['email'];
+                $user->email_verified_at = null;
+            }
         }
         if (array_key_exists('phone', $data)) {
             $user->phone = $data['phone'];
@@ -40,6 +43,10 @@ final readonly class ProfileService
             $ip,
             $userAgent
         );
+
+        if (array_key_exists('email', $data) && $user->email_verified_at === null) {
+            $user->sendEmailVerificationNotification();
+        }
 
         return $user->fresh() ?? $user;
     }

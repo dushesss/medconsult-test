@@ -19,9 +19,13 @@ final class UserActionController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $includeTelemetry = filter_var($request->query('include_telemetry'), FILTER_VALIDATE_BOOLEAN);
+
         $paginator = $this->userActionService->paginateForUser(
-            $request->user(),
-            (int) $request->query('per_page', 15)
+            $user,
+            (int) $request->query('per_page', 15),
+            $includeTelemetry
         );
 
         return ApiResponse::success([

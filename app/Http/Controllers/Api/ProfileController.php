@@ -20,8 +20,10 @@ final class ProfileController extends Controller
 
     public function show(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return ApiResponse::success(
-            (new ProfileResource($request->user()))->resolve()
+            (new ProfileResource($user))->resolve()
         );
     }
 
@@ -36,7 +38,7 @@ final class ProfileController extends Controller
 
         return ApiResponse::success(
             (new ProfileResource($user))->resolve(),
-            'Profile updated'
+            'Профиль обновлён'
         );
     }
 }
