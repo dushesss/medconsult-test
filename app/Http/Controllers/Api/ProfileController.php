@@ -14,6 +14,10 @@ use Illuminate\Http\Request;
 
 final class ProfileController extends Controller
 {
+    public function __construct(
+        private readonly ProfileService $profileService
+    ) {}
+
     public function show(Request $request): JsonResponse
     {
         return ApiResponse::success(
@@ -21,9 +25,14 @@ final class ProfileController extends Controller
         );
     }
 
-    public function update(UpdateProfileRequest $request, ProfileService $profileService): JsonResponse
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $user = $profileService->update($request->user(), $request->validated());
+        $user = $this->profileService->update(
+            $request->user(),
+            $request->validated(),
+            $request->ip(),
+            $request->userAgent()
+        );
 
         return ApiResponse::success(
             (new ProfileResource($user))->resolve(),

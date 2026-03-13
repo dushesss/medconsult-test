@@ -23,7 +23,9 @@ final class AuthController extends Controller
     {
         $result = $this->authService->login(
             $request->validated('email'),
-            $request->validated('password')
+            $request->validated('password'),
+            $request->ip(),
+            $request->userAgent()
         );
 
         if ($result === null) {
@@ -45,7 +47,9 @@ final class AuthController extends Controller
         $result = $this->authService->register(
             $request->validated('name'),
             $request->validated('email'),
-            $request->validated('password')
+            $request->validated('password'),
+            $request->ip(),
+            $request->userAgent()
         );
 
         return ApiResponse::success(
@@ -65,7 +69,12 @@ final class AuthController extends Controller
             return ApiResponse::error('Не авторизован', null, 401);
         }
 
-        $this->authService->revokeBearerToken($request->bearerToken());
+        $this->authService->logout(
+            $request->user(),
+            $request->bearerToken(),
+            $request->ip(),
+            $request->userAgent()
+        );
 
         return ApiResponse::success(null, 'Выход выполнен');
     }

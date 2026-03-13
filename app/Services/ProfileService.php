@@ -8,10 +8,14 @@ use App\Models\User;
 
 final readonly class ProfileService
 {
+    public function __construct(
+        private UserActionService $userActionService
+    ) {}
+
     /**
      * @param  array{name?: string, email?: string, phone?: string|null, birth_date?: string|null}  $data
      */
-    public function update(User $user, array $data): User
+    public function update(User $user, array $data, string $ip, ?string $userAgent): User
     {
         if (array_key_exists('name', $data)) {
             $user->name = $data['name'];
@@ -27,6 +31,15 @@ final readonly class ProfileService
         }
 
         $user->save();
+
+        $this->userActionService->log(
+            $user,
+            'profile_update',
+            null,
+            array_keys($data),
+            $ip,
+            $userAgent
+        );
 
         return $user->fresh() ?? $user;
     }

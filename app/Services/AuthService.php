@@ -12,11 +12,19 @@ final class AuthService
 {
     private const string TOKEN_NAME = 'api';
 
+    public function __construct(
+        private readonly UserActionService $userActionService
+    ) {}
+
     /**
      * @return array{user: User, token: string}|null
      */
-    public function login(string $email, string $password): ?array
-    {
+    public function login(
+        string $email,
+        string $password,
+        string $ip,
+        ?string $userAgent
+    ): ?array {
         if (! Auth::attempt(['email' => $email, 'password' => $password])) {
             return null;
         }
@@ -28,14 +36,21 @@ final class AuthService
 
         $token = $user->createToken(self::TOKEN_NAME)->plainTextToken;
 
+        $this->userActionService->log($user, 'login', null, null, $ip, $userAgent);
+
         return ['user' => $user, 'token' => $token];
     }
 
     /**
      * @return array{user: User, token: string}
      */
-    public function register(string $name, string $email, string $password): array
-    {
+    public function register(
+        string $name,
+        string $email,
+        string $password,
+        string $ip,
+        ?string $userAgent
+    ): array {
         $user = User::query()->create([
             'name' => $name,
             'email' => $email,
@@ -44,7 +59,15 @@ final class AuthService
 
         $token = $user->createToken(self::TOKEN_NAME)->plainTextToken;
 
+        $this->userActionService->log($user, 'register', null, null, $ip, $userAgent);
+
         return ['user' => $user, 'token' => $token];
+    }
+
+    public function logout(User $user, ?string $plainToken, string $ip, ?string $userAgent): void
+    {
+        $this->userActionService->log($user, 'logout', null, null, $ip, $userAgent);
+        $this->revokeBearerToken($plainToken);
     }
 
     public function revokeBearerToken(?string $plainToken): void
