@@ -1,0 +1,480 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Medconsult Test API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8089"
+    }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Profile" },
+    { "name": "Actions" },
+    { "name": "Files" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum"
+      }
+    },
+    "schemas": {
+      "ApiSuccess": {
+        "type": "object",
+        "properties": {
+          "data": {},
+          "message": { "type": "string", "nullable": true },
+          "errors": { "nullable": true }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "null" },
+          "message": { "type": "string", "nullable": true },
+          "errors": {}
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "null" },
+          "message": { "type": "string", "example": "Ошибка валидации" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "email_verified_at": { "type": "string", "nullable": true }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "email_verified_at": { "type": "string", "nullable": true },
+          "avatar_path": { "type": "string", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+          "birth_date": { "type": "string", "nullable": true },
+          "created_at": { "type": "string", "nullable": true },
+          "updated_at": { "type": "string", "nullable": true }
+        }
+      },
+      "AuthPayload": {
+        "type": "object",
+        "properties": {
+          "user": { "$ref": "#/components/schemas/User" },
+          "token": { "type": "string" },
+          "token_type": { "type": "string", "example": "Bearer" }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "current_page": { "type": "integer" },
+          "last_page": { "type": "integer" },
+          "per_page": { "type": "integer" },
+          "total": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Вход",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успех",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiSuccess" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/AuthPayload" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Неверный email или пароль",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Регистрация",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password", "password_confirmation"],
+                "properties": {
+                  "name": { "type": "string", "maxLength": 255 },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "password_confirmation": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Создано",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiSuccess" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/AuthPayload" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ошибка валидации",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Выход",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Успех",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiSuccess" }
+              }
+            }
+          },
+          "401": {
+            "description": "Не авторизован",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profile": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Текущий профиль",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Профиль",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiSuccess" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Profile" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Требуется авторизация",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Profile"],
+        "summary": "Обновить профиль",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "maxLength": 255 },
+                  "email": { "type": "string", "format": "email" },
+                  "phone": { "type": "string", "maxLength": 32, "nullable": true },
+                  "birth_date": { "type": "string", "format": "date", "nullable": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Обновлено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiSuccess" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Profile" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": { "description": "Требуется авторизация" },
+          "422": {
+            "description": "Ошибка валидации",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/profile/actions": {
+      "get": {
+        "tags": ["Actions"],
+        "summary": "Список действий пользователя",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 15 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "С пагинацией в data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer" },
+                              "action": { "type": "string" },
+                              "description": { "type": "string", "nullable": true },
+                              "payload": { "nullable": true },
+                              "ip": { "type": "string", "nullable": true },
+                              "user_agent": { "type": "string", "nullable": true },
+                              "created_at": { "type": "string", "nullable": true }
+                            }
+                          }
+                        },
+                        "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+                      }
+                    },
+                    "message": { "type": "string", "nullable": true },
+                    "errors": { "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Требуется авторизация" }
+        }
+      }
+    },
+    "/api/v1/files": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "Список файлов",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 15 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список и meta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": { "type": "integer" },
+                              "original_name": { "type": "string" },
+                              "mime_type": { "type": "string" },
+                              "size": { "type": "integer" },
+                              "created_at": { "type": "string", "nullable": true }
+                            }
+                          }
+                        },
+                        "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+                      }
+                    },
+                    "message": { "nullable": true },
+                    "errors": { "nullable": true }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Требуется авторизация" }
+        }
+      },
+      "post": {
+        "tags": ["Files"],
+        "summary": "Загрузка файла",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Файл загружен",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiSuccess" }
+              }
+            }
+          },
+          "401": { "description": "Требуется авторизация" },
+          "422": { "description": "Файл не передан или валидация" }
+        }
+      }
+    },
+    "/api/v1/files/{userFile}": {
+      "get": {
+        "tags": ["Files"],
+        "summary": "Скачать файл",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userFile",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "id записи user_files"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Поток файла (не JSON)",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "401": { "description": "Требуется авторизация" },
+          "403": { "description": "Нет доступа к чужому файлу" },
+          "404": { "description": "Не найдено" }
+        }
+      }
+    }
+  }
+}

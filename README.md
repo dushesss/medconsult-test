@@ -1,59 +1,83 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Medconsult Test
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Тестовый бэкенд на Laravel: API с Sanctum, профиль, лог действий, загрузка файлов. Ниже сначала шпаргалка по теории, потом всё про этот репозиторий.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Ответы на вопросы
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Вопрос.** В чём разница между extends и include в Blade?
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Ответ.** extends задаёт наследование от общего макета: страница строится поверх layout, блоки section подставляются в родителе. include просто вставляет фрагмент шаблона (шапка, подвал), без наследования.
 
-## Learning Laravel
+**Вопрос.** Что такое сервис-провайдеры и зачем они?
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**Ответ.** Классы, которые Laravel поднимает при старте: биндинги в контейнере, маршруты, события, политики. Одна точка настройки до того, как пойдут запросы.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Вопрос.** Как работает маршрутизация в Laravel?
 
-## Laravel Sponsors
+**Ответ.** Запрос во фронт-контроллер, kernel, роутер сопоставляет метод и URL с правилами из routes. Совпало: middleware по цепочке, потом контроллер или замыкание, ответ клиенту.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Вопрос.** В чём разница между get и first в Eloquent?
 
-### Premium Partners
+**Ответ.** get возвращает коллекцию всех строк по запросу. first одну первую строку или пусто. Для списка get, для одной записи first.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Вопрос.** Как сделать миграцию таблицы users с полями имя, email, пароль, статус?
 
-## Contributing
+**Ответ.** Миграция через artisan, в up описать таблицу: id, name, уникальный email, password (в БД хранят уже хеш), status, при желании timestamps. Затем migrate.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Вопрос.** Как получить всех активных пользователей с сортировкой по дате регистрации?
 
-## Code of Conduct
+**Ответ.** Фильтр по активному статусу, сортировка по дате регистрации (часто это created_at, если нет отдельного поля).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Вопрос.** Как связь один ко многим пользователи и посты?
 
-## Security Vulnerabilities
+**Ответ.** У постов колонка user_id и внешний ключ. У User hasMany постов, у Post belongsTo пользователю.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Зачем этот проект
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+API версии v1: регистрация, вход, выход по токену, профиль, история действий, список и загрузка файлов, скачивание своего файла. Ответы обёрнуты в единый JSON: `data`, `message`, `errors`.
+
+## Быстрый старт
+
+1. `composer install`
+2. Скопировать `.env.example` в `.env`, настроить БД
+3. `php artisan key:generate`
+4. `php artisan migrate`
+5. `php artisan serve`
+
+Дальше база для API: например `http://127.0.0.1:8000/api/v1/...`
+
+## Документация API
+
+В корне лежит **`openapi.json`**. Удобно открыть в Swagger UI или импортировать в Postman.
+
+### Маршруты этого приложения
+
+| Метод | Путь | Доступ | Заметка |
+|-------|------|--------|---------|
+| GET | `/` | все | Welcome |
+| GET | `/up` | все | Проверка, что приложение живое |
+| POST | `/api/v1/login` | гость | JSON: email, password |
+| POST | `/api/v1/register` | гость | JSON: name, email, password, password_confirmation |
+| POST | `/api/v1/logout` | Bearer | Sanctum |
+| GET | `/api/v1/profile` | Bearer | Текущий пользователь |
+| PATCH | `/api/v1/profile` | Bearer | Частичное обновление |
+| GET | `/api/v1/profile/actions` | Bearer | Query `per_page` |
+| GET | `/api/v1/files` | Bearer | Список, query `per_page` |
+| POST | `/api/v1/files` | Bearer | Multipart, поле `file` |
+| GET | `/api/v1/files/{id}` | Bearer | Отдача файла, не JSON |
+
+## От запроса до ответа (по шагам)
+
+1. Веб-сервер отдаёт запрос в `public/index.php`.
+2. Composer, `bootstrap/app.php`, поднимаются провайдеры (register, boot), роуты, контейнер.
+3. HTTP kernel, глобальный middleware, роутер ищет маршрут.
+4. Middleware маршрута (throttle, sanctum и т.д.), контроллер.
+5. Ответ назад через middleware к клиенту.
+
+---
+
+Основа фреймворка: [Laravel](https://laravel.com), лицензия MIT.
