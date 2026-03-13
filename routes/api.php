@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\UserActionController;
 use Illuminate\Support\Facades\Route;
@@ -16,5 +17,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/profile', [ProfileController::class, 'show']);
         Route::patch('/profile', [ProfileController::class, 'update']);
         Route::get('/profile/actions', [UserActionController::class, 'index']);
+        Route::get('/files', [FileController::class, 'index']);
+        Route::post('/files', [FileController::class, 'store']);
+        Route::get('/files/{userFile}', [FileController::class, 'show']);
     });
 });

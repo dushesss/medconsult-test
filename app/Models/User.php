@@ -62,4 +62,12 @@ final class User extends Authenticatable
     {
         return $this->hasMany(UserAction::class);
     }
+
+    /**
+     * @return HasMany<UserFile, $this>
+     */
+    public function userFiles(): HasMany
+    {
+        return $this->hasMany(UserFile::class);
+    }
 }
