@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class UserFile extends Model
 {
+    use BelongsToUser;
     protected $fillable = [
         'user_id',
         'path',
@@ -16,12 +17,4 @@ final class UserFile extends Model
         'mime_type',
         'size',
     ];
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 }

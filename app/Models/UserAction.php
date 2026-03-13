@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToUser;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class UserAction extends Model
 {
+    use BelongsToUser;
     public const UPDATED_AT = null;
 
     protected $fillable = [
@@ -30,13 +31,5 @@ final class UserAction extends Model
             'payload' => 'array',
             'created_at' => 'datetime',
         ];
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 }
